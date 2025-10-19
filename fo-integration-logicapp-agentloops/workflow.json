@@ -1,0 +1,183 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "actions": {
+            "Agent": {
+                "type": "Agent",
+                "inputs": {
+                    "parameters": {
+                        "deploymentId": "model-cfc07",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are an agent that returns the users requested employee information from a portal using available tools for you to communicate with microsoft d365 finance and operations.\n\n-Tool \"Get employees\" returns a list of employee information which you can pass a odata filter to field \"NameAlias\" to query a specific employee name.\n-Tool Log requests log the request JSON to an Azure table\n-Tool send email to employee sends an email message to the given employee email address\n\n-Name of the asking employee is \"@{triggerBody()?['askingEmployee']}\"\n-Name of the employee to inquiry is \"@{triggerBody()?['inquiryEmployee']}\" \n-Information requested about the inquiry employee is \"@{triggerBody()?['informationToInquiry']}\" \n\n-Check if the asking employee exists using the get employees tool and return an error message if it does notexists. Return no employee information if asking employee does not exists. Do not inform if asking employee do exists in the system.\n\n-Asking too private questions are forbidden, too private questions are questions about home address, family, gender, health, age and religion. If a too private question is asked, warn the user kindly the question too private is and do not return any information. \n\n-Get the requested employee information for the inquiry employee using the get employee information tool. Requested information can be a question about the employee information or a list of information or fields from the employee information, extract that from the employee information. Pick the first record if tool return more than one records. Asking questions about managers are also forbidden, so check if the employee information states employee is a manager by controlling if \"TitleId\" field contains word \"Manager\" in it and if it does, return to user a warning instead of the requested information and send to this manager employee's email address a nice formatted warning email giving details about the inquiry question and asking employee name using the send email tool.\n\n-If no forbidden information is asked, create a response message by formatting the user requested employee information in a good readable rich text\n-Always log the user request to Azure table using the log request tool"
+                            }
+                        ],
+                        "agentModelType": "AzureOpenAI",
+                        "agentModelSettings": {
+                            "agentHistoryReductionSettings": {
+                                "agentHistoryReductionType": "maximumTokenCountReduction",
+                                "maximumTokenCount": 128000
+                            },
+                            "deploymentModelProperties": {
+                                "name": "gpt-4.1-mini",
+                                "format": "OpenAI",
+                                "version": "2025-04-14"
+                            }
+                        }
+                    },
+                    "modelConfigurations": {
+                        "model1": {
+                            "referenceName": "agent"
+                        }
+                    }
+                },
+                "tools": {
+                    "Get_employees": {
+                        "actions": {
+                            "Lists_items_present_in_table": {
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "referenceName": "dynamicsax"
+                                        }
+                                    },
+                                    "method": "get",
+                                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('your-fo-link'))}/tables/@{encodeURIComponent(encodeURIComponent('Employees'))}/items",
+                                    "queries": {
+                                        "$filter": "@agentParameters('employee OData filter string')",
+                                        "cross-company": true
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Gets a list of employee information records using odata",
+                        "agentParameterSchema": {
+                            "type": "object",
+                            "properties": {
+                                "employee OData filter string": {
+                                    "type": "string",
+                                    "description": "Odata filter string to filter a specific employee from the employee information list"
+                                }
+                            },
+                            "required": [
+                                "employee OData filter string"
+                            ]
+                        }
+                    },
+                    "Log_requests": {
+                        "actions": {
+                            "Insert_Entity_(V2)": {
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "referenceName": "azuretables-2"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "body": "@agentParameters('Entity')",
+                                    "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/tables/@{encodeURIComponent('laagenttestrequestlog')}/entities"
+                                }
+                            }
+                        },
+                        "description": "Log requests into azure table",
+                        "agentParameterSchema": {
+                            "type": "object",
+                            "properties": {
+                                "Entity": {
+                                    "type": "string",
+                                    "description": "Table entity in JSON format. The properties 'PartitionKey' and 'RowKey' must be specified."
+                                }
+                            },
+                            "required": [
+                                "Entity"
+                            ]
+                        }
+                    },
+                    "Send_email_to_employee": {
+                        "actions": {
+                            "Send_Email": {
+                                "type": "ServiceProvider",
+                                "inputs": {
+                                    "parameters": {
+                                        "from": "m",
+                                        "to": "m",
+                                        "body": "@{agentParameters('email')}    |    @{agentParameters('Message')}",
+                                        "importance": "Normal"
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "Smtp-1",
+                                        "operationId": "sendEmail",
+                                        "serviceProviderId": "/serviceProviders/Smtp"
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Send an email to a user",
+                        "agentParameterSchema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "description": "Email of the employee"
+                                },
+                                "Message": {
+                                    "type": "string",
+                                    "description": "Message to the employee"
+                                }
+                            },
+                            "required": [
+                                "email",
+                                "Message"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {},
+                "limit": {
+                    "count": 100
+                }
+            },
+            "Response": {
+                "type": "Response",
+                "kind": "Http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": "@outputs('Agent')?['lastAssistantMessage']"
+                },
+                "runAfter": {
+                    "Agent": [
+                        "SUCCEEDED"
+                    ]
+                }
+            }
+        },
+        "outputs": {},
+        "triggers": {
+            "When_an_HTTP_request_is_received": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "askingEmployee": {
+                                "type": "string"
+                            },
+                            "inquiryEmployee": {
+                                "type": "string"
+                            },
+                            "informationToInquiry": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "kind": "Stateful"
+}
