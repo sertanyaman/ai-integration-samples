@@ -1,0 +1,164 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "actions": {
+            "Get_chat_completions_using_Prompt_Template": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "deploymentId": "model-4d3b4",
+                        "promptTemplateInput": "system:\nYou are a helpful assistant for converting data from one format to another and mapping fields from one document to another by the closest field match. The user will provide you with two documents: a source document and a conversion template document. You need to convert the data in the source document to the template data format, matching and mapping the data to the closest fields in the template, and return a raw document containing the same fields in the template.\n\nuser:\nConvert data from this source document:\n\"{{source}}\"\n\nto the same format as the template document:\n\"{{template}}\"\n\nDo not change the PriceType field from the template; return the result",
+                        "temperature": 1,
+                        "promptTemplateInputVariables": {
+                            "source": "@triggerBody()?['data']",
+                            "template": "@string(variables('templateJson'))"
+                        },
+                        "max_tokens": 4048,
+                        "presence_penalty": 0,
+                        "frequency_penalty": 0
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "openai",
+                        "operationId": "getChatCompletionsUsingPromptTemplate",
+                        "serviceProviderId": "/serviceProviders/openai"
+                    },
+                    "retryPolicy": {
+                        "type": "none"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variables": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Initialize_variables": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "templateJson",
+                            "type": "object",
+                            "value": {
+                                "dataAreaId": "usmf",
+                                "ItemNumber": "P0004",
+                                "CostingVersionId": "30",
+                                "FromDate": "2017-01-15T12:00:00Z",
+                                "PriceType": "Cost",
+                                "PriceSiteId": "3",
+                                "PriceChargesQuantity": 100,
+                                "FixedPriceCharges": 0,
+                                "IsPriceIncludingCharges": "Yes",
+                                "Price": 103.934464,
+                                "PriceQuantity": 1
+                            }
+                        }
+                    ]
+                },
+                "runAfter": {}
+            },
+            "Parse_JSON": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@body('Get_chat_completions_using_Prompt_Template')?['response']?['content']",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "dataAreaId": {
+                                "type": "string"
+                            },
+                            "ItemNumber": {
+                                "type": "string"
+                            },
+                            "CostingVersionId": {
+                                "type": "string"
+                            },
+                            "FromDate": {
+                                "type": "string"
+                            },
+                            "PriceType": {
+                                "type": "string"
+                            },
+                            "PriceSiteId": {
+                                "type": "string"
+                            },
+                            "PriceChargesQuantity": {
+                                "type": "integer"
+                            },
+                            "FixedPriceCharges": {
+                                "type": "integer"
+                            },
+                            "IsPriceIncludingCharges": {
+                                "type": "string"
+                            },
+                            "Price": {
+                                "type": "number"
+                            },
+                            "PriceQuantity": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Get_chat_completions_using_Prompt_Template": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Response": {
+                "type": "Response",
+                "kind": "Http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": "@body('Parse_JSON')"
+                },
+                "runAfter": {
+                    "Create_record": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Create_record": {
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "referenceName": "dynamicsax"
+                        }
+                    },
+                    "method": "post",
+                    "body": "@body('Parse_JSON')",
+                    "path": "/datasets/@{encodeURIComponent(encodeURIComponent('yourd365foserver.operations.eu.dynamics.com'))}/tables/@{encodeURIComponent(encodeURIComponent('InventItemPendingPricesV2'))}/items",
+                    "retryPolicy": {
+                        "type": "none"
+                    }
+                },
+                "runAfter": {
+                    "Parse_JSON": [
+                        "SUCCEEDED"
+                    ]
+                }
+            }
+        },
+        "outputs": {},
+        "triggers": {
+            "When_an_HTTP_request_is_received": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "kind": "Stateful"
+}
