@@ -1,0 +1,4 @@
+{
+"data":"item_id,name,category,subcategory,supplier,base_price,discount_rate,tax_rate,currency,final_price,stock,reorder_level,last_restock_date,last_updated
+P0004,Bluetooth Speaker,Audio,Speakers,SoundWave,59.99,0.15,0.08,USD,55.11,100,30,\"2025-09-05\",\"2025-11-03T09:25:00Z\""
+}

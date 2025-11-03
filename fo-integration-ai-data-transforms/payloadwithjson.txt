@@ -1,0 +1,1 @@
+{"data":"{\r\n    \"item_id\": \"P0004\",\r\n    \"name\": \"Wireless Mouse\",\r\n    \"category\": \"Electronics\",\r\n    \"price\": 25.99,\r\n    \"currency\": \"USD\",\r\n    \"stock\": 120,\r\n    \"last_updated\": \"2025-11-03T10:15:00Z\"\r\n  }"}
