@@ -1,0 +1,20 @@
+{
+"data":"Objet : Détails et tarif de l’article SSD 1 To NVMe 3.0
+
+Bonjour Monseur Sertan,
+
+Comme convenu lors de notre dernier échange, je vous transmets ci-dessous les informations détaillées concernant l’article demandé.
+
+Il s’agit du Disque SSD 1 To NVMe 3.0 (référence SKU : P0004). Ce modèle offre une capacité de stockage de 1 téraoctet, avec une interface NVMe PCIe 3.0 x4 et des vitesses de lecture/écriture de 3500/3000 Mo par seconde. Il est particulièrement adapté aux ordinateurs de bureau et portables nécessitant des performances élevées.
+
+Le prix unitaire est fixé à 89,90 € HT, valable du 1er novembre 2025 au 31 décembre 2025. Ce tarif inclut une garantie constructeur de trois ans.
+
+N’hésitez pas à me contacter si vous souhaitez recevoir un devis formel ou procéder à la commande.
+
+Bien cordialement,
+Julien Martin
+Responsable commercial
+TechStor Solutions
+📞 06 24 58 39 10
+📧 julien.martin@techstor-solutions.fr"
+}
